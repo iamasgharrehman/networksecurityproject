@@ -43,13 +43,55 @@ def save_numpy_array_data(file_path:str,array:np.array):
     except Exception as e:
         raise NetworkSecurityException(e,sys) from e
     
-def save_object(file_path:str, obj:object)->None:
+def save_object(file_path: str, obj: object) -> None:
     try:
-        logging.info("Entered the saved object method of Main Utils class")
-        dir_path =os.path.dirname(file_path)
-        os.makedirs(dir_path,exist_ok=True)
-        with open(file_path,'wb') as file_obj:
+        logging.info("Entered the save_object method of MainUtils class")
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+        with open(file_path, "wb") as file_obj:
             pickle.dump(obj, file_obj)
-        logging.info("Exited the save_object of method of utlis class")
+        logging.info("Exited the save_object method of MainUtils class")
     except Exception as e:
-        raise NetworkSecurityException(e,sys) from e
+        raise NetworkSecurityException(e, sys) from e
+    
+def load_object(file_path:str):
+    try:
+        if not os.path.exists(file_path):
+            raise Exception(f"file {file_path} not found")
+        with open(file_path,'rb') as file_obj:
+            print(file_path)
+            return pickle.load(file_obj)
+    except Exception as e:
+        raise NetworkSecurityException(e,sys)
+    
+
+def load_numpy_array_data(file_path:str) -> np.array:
+    try:
+        with open(file_path, 'rb') as file_obj:
+            return np.load(file_obj)
+    except Exception as e:
+        raise NetworkSecurityException(e,sys)
+    
+
+def evaluate_models(train_X,train_y,test_X,test_y, models,param):
+    try:
+        report = {}
+        for i in range(len(list(models))):
+            model=list(models.values())[i]
+            para=param[list(models.keys())[i]]
+
+            gs=GridSearchCV(model,para,cv=3)
+            gs.fit(train_X,train_y)
+
+            model.set_params(**gs.best_params_)
+            model.fit(train_X,train_y)
+
+            y_train_pred=model.predict(train_X)
+            y_test_pred=model.predict(test_X)
+
+            train_model_score = r2_score(train_y,y_train_pred)
+            test_model_score= r2_score(test_y,y_test_pred)
+
+            report[list(models.keys())[i]]=test_model_score
+        return report
+    except Exception as e:
+        raise NetworkSecurityException(e,sys)
